@@ -3,7 +3,6 @@ import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.utils import get_random_id
 from sqlalchemy import create_engine
-
 from config import comunity_token, acces_token
 from core import VkTools
 from data_story import check_user, add_user
@@ -48,9 +47,6 @@ class BotInterface:
                                      profile_id=event.user_id)
                             users_to_show.append(user)
 
-                    # проверить есть-ли пользователь
-                    # в БД в соответствии с event.user_id
-
                     for user in users_to_show:
                         photos_user = self.api.get_photos(user['id'])
                     
@@ -66,7 +62,6 @@ class BotInterface:
                             f'{user["name"]} ссылка: vk.com/{user["id"]}',
                             attachment=attachment)
                     self.offset += 10
-                    # добавить анкеты в БД в соответствии с event.user_id
                  
                 elif command == 'пока':
                     self.message_send(event.user_id, 'пока')
