@@ -1,0 +1,5 @@
+comunity_token = ' '
+acces_token =' '
+db_url_object = ' '
+db_username = ' '
+db_password = ' '
