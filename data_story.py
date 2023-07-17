@@ -20,10 +20,8 @@ class Viewed(Base):
     home_town = sq.Column(sq.Text, nullable=True)
     shown = sq.Column(sq.Boolean, default=False)
 
-
 # добавление записи в бд
 
-#with Session(engine) as session:
 def add_user(session, profile_id, user_id, name, bdate, home_town):
     to_bd = Viewed(
         profile_id=profile_id,
