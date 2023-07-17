@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime 
 import vk_api
 from config import acces_token
 from pprint import pprint
@@ -9,18 +9,22 @@ class VkTools:
         self.api = vk_api.VkApi(token=acc_token)
 
     def get_profile_info(self, user_id):
-        info, = self.api.method('users.get', 
+        info, = self.api.method('users.get',
                             {'user_id': user_id,
-                             'fields': 'city,bdate,sex,relation,home_town'})
+                            'fields': 'city,bdate,sex,relation,home_town' 
+                            }
+                            )
         user_info = {'name': info['first_name'] + ' ' + info['last_name'],
                      'id':  info['id'],
                      'bdate': info.get('bdate'),
                      'home_town': info['home_town'],
                      'sex': info['sex'],
-                     'city': info['city']['id']}
+                     'city': info['city']['id']
+                     }
         return user_info
     
     def serch_users(self, params, offset, count=10):
+
         sex = 1 if params['sex'] == 2 else 2
         city = params['city']
         curent_year = datetime.now().year
@@ -37,27 +41,39 @@ class VkTools:
                                  'sex': sex,
                                  'city': city,
                                  'status': 6,
-                                 'is_closed': False})
+                                 'is_closed': False
+                                }
+                            )
 
         res = []
         for user in users['items']:
             if not user['is_closed']:
                 res.append({'id': user['id'],
-                            'name': user['first_name'] + ' ' + user['last_name']})
+                            'name': user['first_name'] + ' ' + user['last_name']
+                           }
+                           )
+        
         return res
 
     def get_photos(self, user_id):
         photos = self.api.method('photos.get',
                                  {'user_id': user_id,
                                   'album_id': 'profile',
-                                  'extended': 1})
+                                  'extended': 1
+                                 }
+                                )
         res = []
+
         for photo in photos['items']:
             res.append({'owner_id': photo['owner_id'],
                         'id': photo['id'],
                         'likes': photo['likes']['count'],
-                        'comments': photo['comments']['count']})
+                        'comments': photo['comments']['count'],
+                        }
+                        )
+            
         res.sort(key=lambda x: x['likes']+x['comments']*10, reverse=True)
+
         return res[:3]
 
 
