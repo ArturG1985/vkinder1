@@ -1,15 +1,11 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
-
 from interface import BotInterface
-from bd import init_db
-from config import comunity_token, acces_token, \
-    db_url_object, db_username, db_password
 
+from config import comunity_token, acces_token, \
+    db_url_object
 
 def main():
-
-    init_db(user=db_username, password=db_password)
 
     engine = create_engine(db_url_object, echo=True)
     base = declarative_base()

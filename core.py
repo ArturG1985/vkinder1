@@ -1,79 +1,66 @@
-from datetime import datetime 
+from datetime import datetime
 import vk_api
 from config import acces_token
 from pprint import pprint
-
+from vk_api.exceptions import ApiError
 
 class VkTools:
-    def __init__(self, acc_token):
-        self.api = vk_api.VkApi(token=acc_token)
+    def __init__(self, acces_token):
+        self.vkapi = vk_api.VkApi(token=acces_token)
+    
+    def _bdate_toyear(self, bdate):
+        user_age = bdate.split('.')[2] if bdate else None
+        now = datetime.now().year
+        return now - int(user_age) 
 
     def get_profile_info(self, user_id):
-        info, = self.api.method('users.get',
-                            {'user_id': user_id,
-                            'fields': 'city,bdate,sex,relation,home_town' 
-                            }
-                            )
-        user_info = {'name': info['first_name'] + ' ' + info['last_name'],
-                     'id':  info['id'],
-                     'bdate': info.get('bdate'),
-                     'home_town': info['home_town'],
-                     'sex': info['sex'],
-                     'city': info['city']['id']
-                     }
+        try:
+            info, = self.vkapi.method('users.get',
+            {'user_id' : user_id,
+            'fields': 'city, sex, relation, bdate'})
+        except ApiError as e:
+            info = {}
+            print(f'Error = {e}')
+
+        user_info = {'name': (info['first_name'] + ' ' + info['last_name']) if 'first_name' in info and 'last_name' in info else None,
+                  'sex': info.get('sex'),
+                  'city': info.get('city')['title'] if info.get('city') is not None else None,
+                  'year': self._bdate_toyear(info.get('bdate')),
+                  'relation':info.get('relation')}
         return user_info
+
+    def serch_users(self, params, offset):
+        try:
+            users = self.vkapi.method('users.search',
+            {
+                'count': 10,
+                'offset': offset,
+                'hometown': params['city'],
+                'sex': 1 if params['sex'] == 2 else 2,
+                'relation': params['relation'] == 6,
+                'has_photo': True,
+                'age_from': params['year'] - 3,
+                'age_to': params['year'] + 3})
+            
+        except ApiError as e:
+            users = []
+            print(f'Error = {e}')
+        result = [{'name': item['first_name'] + ' ' + item['last_name'],
+                   'id': item['id']} for item in users['items'] if item['is_closed'] is False]
+        return result
     
-    def serch_users(self, params, offset, count=10):
-
-        sex = 1 if params['sex'] == 2 else 2
-        city = params['city']
-        curent_year = datetime.now().year
-        user_year = int(params['bdate'].split('.')[2])
-        age = curent_year - user_year
-        age_from = age - 3
-        age_to = age + 3
-
-        users = self.api.method('users.search',
-                                {'count': count,
-                                 'offset': offset,
-                                 'age_from': age_from,
-                                 'age_to': age_to,
-                                 'sex': sex,
-                                 'city': city,
-                                 'status': 6,
-                                 'is_closed': False
-                                }
-                            )
-
-        res = []
-        for user in users['items']:
-            if not user['is_closed']:
-                res.append({'id': user['id'],
-                            'name': user['first_name'] + ' ' + user['last_name']
-                           }
-                           )
-        
-        return res
-
     def get_photos(self, user_id):
-        photos = self.api.method('photos.get',
+        photos = self.vkapi.method('photos.get',
                                  {'user_id': user_id,
                                   'album_id': 'profile',
-                                  'extended': 1
-                                 }
-                                )
+                                  'extended': 1})
         res = []
-
         for photo in photos['items']:
             res.append({'owner_id': photo['owner_id'],
                         'id': photo['id'],
                         'likes': photo['likes']['count'],
-                        'comments': photo['comments']['count'],
-                        }
-                        )
-            
+                        'comments': photo['comments']['count']})
         res.sort(key=lambda x: x['likes']+x['comments']*10, reverse=True)
-
         return res[:3]
 
 
@@ -84,3 +71,5 @@ if __name__ == '__main__':
     user = users.pop()
     photos = bot.get_photos(user['id'])
     pprint(photos)
+    pprint(users)
+    
